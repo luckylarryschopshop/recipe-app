@@ -1,0 +1,7 @@
+services:
+  recipe-app:
+    build: .
+    ports:
+      - "3005:8000"
+    volumes:
+      - ./data:/app/data

@@ -1,0 +1,83 @@
+html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recipe Manager</title>
+  <style>
+    body { font-family: sans-serif; background: #121212; color: #f5f5f5; margin: 0; padding: 20px; }
+    h1 { text-align: center; }
+    form { display: flex; flex-direction: column; gap: 10px; max-width: 500px; margin: 0 auto; }
+    input, textarea, select { padding: 8px; background: #1e1e1e; color: #f5f5f5; border: none; }
+    button { padding: 10px; background: #333; color: #fff; border: none; cursor: pointer; }
+    .recipe-card { background: #1e1e1e; padding: 15px; margin: 10px auto; max-width: 500px; border-radius: 8px; }
+    .delete { background: #e53935; float: right; }
+    .scale { margin-top: 5px; }
+    .search { max-width: 300px; margin: 10px auto; }
+  </style>
+</head>
+<body>
+  <h1>Recipe Manager</h1>
+  <div class="search"><input type="text" id="search" placeholder="Search recipes..." /></div>
+  <form id="recipeForm">
+    <input type="text" id="name" placeholder="Recipe name" required />
+    <textarea id="ingredients" placeholder="Ingredients (one per line)" required></textarea>
+    <textarea id="steps" placeholder="Steps (one per line)" required></textarea>
+    <input type="number" id="servings" placeholder="Servings" min="1" required />
+    <button type="submit">Add Recipe</button>
+  </form>
+  <div id="recipes"></div>
+  <script>
+    const form = document.getElementById('recipeForm');
+    const recipesDiv = document.getElementById('recipes');
+    const searchInput = document.getElementById('search');
+
+    let recipes = [];
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const name = document.getElementById('name').value;
+      const ingredients = document.getElementById('ingredients').value;
+      const steps = document.getElementById('steps').value;
+      const servings = document.getElementById('servings').value;
+      const recipe = { name, ingredients, steps, servings, scale: 1 };
+      recipes.push(recipe);
+      renderRecipes();
+      form.reset();
+    });
+
+    searchInput.addEventListener('input', () => renderRecipes());
+
+    function renderRecipes() {
+      const search = searchInput.value.toLowerCase();
+      recipesDiv.innerHTML = '';
+      recipes.forEach((recipe, index) => {
+        if (recipe.name.toLowerCase().includes(search)) {
+          const card = document.createElement('div');
+          card.className = 'recipe-card';
+          card.innerHTML = `
+            <strong>${recipe.name}</strong>
+            <p><strong>Ingredients:</strong><br>${recipe.ingredients}</p>
+            <p><strong>Steps:</strong><br>${recipe.steps}</p>
+            <p><strong>Servings:</strong> ${recipe.servings}</p>
+            <input type="range" min="0.5" max="3" step="0.1" value="${recipe.scale}" onchange="updateScale(${index}, this.value)" class="scale" />
+            <button class="delete" onclick="deleteRecipe(${index})">Delete</button>
+          `;
+          recipesDiv.appendChild(card);
+        }
+      });
+    }
+
+    function updateScale(index, value) {
+      recipes[index].scale = parseFloat(value);
+      renderRecipes();
+    }
+
+    function deleteRecipe(index) {
+      recipes.splice(index, 1);
+      renderRecipes();
+    }
+  </script>
+</body>
+</html>
