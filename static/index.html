@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recipe Manager</title>
+  <style>
+    body { font-family: sans-serif; background: #121212; color: #eee; margin: 0; padding: 0; }
+    header { background: #1e1e1e; padding: 1rem; text-align: center; }
+    .search { margin: 1rem; }
+    .search input { padding: 0.5rem; width: 80%; max-width: 400px; }
+    form { display: flex; flex-direction: column; gap: 0.5rem; padding: 1rem; }
+    form input, form textarea { padding: 0.5rem; background: #222; color: #eee; border: none; }
+    .recipe-card { background: #1a1a1a; border: 1px solid #333; padding: 1rem; margin: 1rem; border-radius: 5px; }
+    .serving { font-size: 0.9rem; color: #aaa; }
+    .delete { background: #e53935; color: white; border: none; padding: 0.3rem 0.6rem; border-radius: 3px; cursor: pointer; }
+    .delete:hover { background: #c62828; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Recipe Manager</h1>
+    <div class="search">
+      <input type="text" id="search" placeholder="Search recipes..." oninput="searchRecipes()" />
+    </div>
+  </header>
+  <form id="recipeForm">
+    <input type="text" id="name" placeholder="Recipe name" required />
+    <textarea id="ingredients" placeholder="Ingredients (one per line)" required></textarea>
+    <textarea id="steps" placeholder="Steps (one per line)" required></textarea>
+    <input type="number" id="servings" placeholder="Servings" min="1" required />
+    <button type="submit">Add Recipe</button>
+  </form>
+  <div id="recipes"></div>
+
+  <script>
+    const form = document.getElementById('recipeForm');
+    const recipesDiv = document.getElementById('recipes');
+    const searchInput = document.getElementById('search');
+
+    async function fetchRecipes(query = '') {
+      const res = await fetch(`/api/recipe_app?search=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      recipesDiv.innerHTML = '';
+      data.forEach(recipe => {
+        const card = document.createElement('div');
+        card.className = 'recipe-card';
+        card.innerHTML = `
+          <strong>${recipe.name}</strong>
+          <div class="serving">Serves: ${recipe.servings}</div>
+          <div><strong>Ingredients:</strong><br>${recipe.ingredients.join('<br>')}</div>
+          <div><strong>Steps:</strong><br>${recipe.steps.join('<br>')}</div>
+          <button class="delete" onclick="deleteRecipe(${recipe.id})">Delete</button>
+        `;
+        recipesDiv.appendChild(card);
+      });
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('name').value;
+      const ingredients = document.getElementById('ingredients').value.split('
+').map(i => i.trim()).filter(i => i);
+      const steps = document.getElementById('steps').value.split('
+').map(s => s.trim()).filter(s => s);
+      const servings = parseInt(document.getElementById('servings').value);
+      await fetch('/api/recipe_app', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, ingredients, steps, servings })
+      });
+      form.reset();
+      fetchRecipes();
+    });
+
+    async function deleteRecipe(id) {
+      await fetch(`/api/recipe_app/${id}`, { method: 'DELETE' });
+      fetchRecipes();
+    }
+
+    function searchRecipes() {
+      fetchRecipes(searchInput.value);
+    }
+
+    fetchRecipes();
+  </script>
+</body>
+</html>
